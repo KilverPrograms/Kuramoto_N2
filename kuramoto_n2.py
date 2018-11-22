@@ -6,7 +6,7 @@ import numpy as np
 import h5py
 import os
 
-__version__ = "0.0.22
+__version__ = "0.0.2"
 __author__  = "Kilver J. Campos"
 
 class Kuramoto_N2(object):
