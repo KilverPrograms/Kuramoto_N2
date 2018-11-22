@@ -1,9 +1,12 @@
+#!/usr/local/bin/python2
 from __future__ import division
 import odespy
 import matplotlib.pyplot as plt
 import numpy as np
+import h5py
+import os
 
-__version__ = "0.0.1"
+__version__ = "0.0.22
 __author__  = "Kilver J. Campos"
 
 class Kuramoto_N2(object):
@@ -51,12 +54,11 @@ class Kuramoto_N2(object):
         self.solver.set_initial_condition(self.ics)
         time_points = np.linspace(0., self.T, self.N+1)
         self.u, self.t = self.solver.solve(time_points)
-        print 'Final u(t={0:4.2f}) = {1}'.format(t[-1], np.array2string(self.u[-1,:]
-                                            , precision=2, separator=', ',suppress_small=True))
+        print 'Final u(t={0:4.2f}) = {1}'.format(self.t[-1], np.array2string(self.u[-1,:], separator=', ' ,suppress_small=True))
     
     def plot(self):
         plt.close()
-        plt.figure(figsize=(15,10))
+        plt.figure(figsize=(12,8))
         grid = plt.GridSpec(2,2)
         # ------ Oscillator Fase ------- #
         plt.subplot(grid[0,0])
@@ -93,4 +95,20 @@ class Kuramoto_N2(object):
         plt.xlabel("Time")
         plt.ylabel(r"$\Omega$")
         plt.legend([r"$\dot{\theta_1}$",r"$\dot{\theta_2}$",r"$\dot{\varphi}$"])
+
+        plt.tight_layout()
+        plt.savefig("time_parameters.pdf",)
         plt.show()
+
+    def save(self,fmt):
+        if fmt == 'txt':
+            np.savetxt("pase_"+str(self.kappa)+".txt",self.u)
+        elif fmt == 'hdf5':
+            if os.path.isfile("./phases.h5")==True:
+                print "File exist!"
+                phases = h5py.File("phases.h5",'a')
+                phases.create_dataset(str(self.kappa),data=self.u)
+            else:
+                phases = h5py.File("phases.h5", 'w')
+                phases.create_dataset(str(self.kappa), data=self.u)
+
