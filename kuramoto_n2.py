@@ -6,7 +6,7 @@ import numpy as np
 import h5py
 import os
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 __author__  = "Kilver J. Campos"
 
 class Kuramoto_N2(object):
@@ -54,6 +54,7 @@ class Kuramoto_N2(object):
         self.solver.set_initial_condition(self.ics)
         time_points = np.linspace(0., self.T, self.N+1)
         self.u, self.t = self.solver.solve(time_points)
+        self.du = np.gradient(self.u, self.dt, axis=0)
         print 'Final u(t={0:4.2f}) = {1}'.format(self.t[-1], np.array2string(self.u[-1,:], separator=', ' ,suppress_small=True))
     
     def plot(self):
@@ -65,7 +66,7 @@ class Kuramoto_N2(object):
         plt.plot(self.t, self.u)#%(2*np.pi))
         #plt.ylim(0,2*np.pi)
         plt.xlim(0,self.T)
-        plt.title("Oscillators fase")
+        plt.title("Oscillators Phase")
         plt.xlabel("Time")
         plt.ylabel(r"$\theta_1,\theta_2$")
         plt.legend([r"$\theta_1$",r"$\theta_2$"])
@@ -73,7 +74,7 @@ class Kuramoto_N2(object):
         plt.subplot(grid[0,1])
         plt.plot(self.t, self.u[:,0]-self.u[:,1])
         plt.xlim(0,self.T)
-        plt.title("Fase Difference")
+        plt.title("Phase Difference")
         plt.xlabel("Time")
         plt.ylabel(r"$|\theta_1-\theta_2|$")
         # ------- Order Parameter ------- #
@@ -85,19 +86,18 @@ class Kuramoto_N2(object):
         plt.xlabel("Time")
         plt.ylabel(r"$r$")
         # ------- Agular velociti ------- #
-        self.du = np.gradient(self.u,self.dt,axis=0)
         plt.subplot(grid[1,1])
         plt.plot(self.t, self.du[:,0])
         plt.plot(self.t, self.du[:,1])
         plt.plot(self.t, np.gradient(self.u[:,0]-self.u[:,1],self.dt),'k')
         plt.xlim(0,self.T)
-        plt.title("Aparent Angular Velocity")
+        plt.title("Angular Velocity")
         plt.xlabel("Time")
-        plt.ylabel(r"$\Omega$")
+        plt.ylabel(r"$\Omega_1,\Omega_2,\Omega$")
         plt.legend([r"$\dot{\theta_1}$",r"$\dot{\theta_2}$",r"$\dot{\varphi}$"])
 
         plt.tight_layout()
-        plt.savefig("time_parameters.pdf",)
+        plt.savefig("time_parameters_K"+"{0:.2f}".format(self.kappa)+".pdf",)
         plt.show()
 
     def save(self,fmt):
