@@ -76,7 +76,31 @@ class Plot:
         self.t = self.solution.t
         self.T = self.solution.T
         self.dt = self.solution.dt
-        self.phi = np.arctan(np.sum(np.sin(self.u), axis=1) / np.sum(np.cos(self.u), axis=1))
+        self.N = self.solution.N
+        # self.phi = np.arctan(np.sum(np.sin(self.u),axis=1)/np.sum(np.cos(self.u),axis=1))
+        self.phi = self.func()
+
+    def func(self):
+        phi = np.arctan(np.sum(np.sin(self.u), axis=1) / np.sum(np.cos(self.u), axis=1))
+        phi[phi < 0] += np.pi / 2
+
+        if phi[-1] - phi[-2] > 0.0:
+            uod = "up"
+        else:
+            uod = "down"
+
+        s = 0
+        if uod == "up":
+            for i in xrange(self.N + 1):
+                if (np.abs(phi[i] - phi[i - 1])) > s + np.pi / 4:
+                    s += np.pi / 2
+                phi[i] += s
+        else:
+            for i in xrange(self.N + 1):
+                if (np.abs(phi[i] - phi[i - 1])) > s + np.pi / 4:
+                    s += np.pi / 2
+                phi[i] -= s
+        return phi
 
     def phase(self):
         plt.close()
@@ -101,8 +125,9 @@ class Plot:
         plt.close()
         plt.figure(figsize=(7.5, 5))
         plt.plot(self.t, self.du)
-        plt.plot(self.t, np.gradient(self.phi, self.dt), 'k')
+        plt.plot(self.t, np.gradient(self.phi, self.dt), '-k')
         plt.xlim(0, self.T)
+        plt.ylim(np.min(self.du), np.max(self.du))
         plt.title("Aparent Angular Velocity")
         plt.xlabel("Time")
         plt.ylabel(r"$\Omega$")
@@ -110,3 +135,5 @@ class Plot:
 
     def show(self):
         plt.show()
+
+# class Scam_K:
