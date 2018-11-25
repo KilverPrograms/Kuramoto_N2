@@ -4,6 +4,7 @@ import h5py
 import odespy
 import matplotlib.pyplot as plt
 import numpy as np
+from numba import jitclass
 
 
 class Kuramoto:
@@ -37,10 +38,20 @@ class Solver:
         self.solver.set_initial_condition(self.problem.ics)
         time_points = np.linspace(0., self.T, self.N + 1)
         self.u, self.t = self.solver.solve(time_points)
-        self.du = np.gradient(self.u, self.dt, axis=0)
         print 'Final u(t={0:4.2f})={1}'.format(self.t[-1], np.array2string(self.u[-1, :]
                                                                            , precision=2, separator=', ',
                                                                            suppress_small=True))
+
+    def opr_t(self):
+        self.r = np.abs((1 / float(self.problem.n_osc)) * np.sum(np.exp(1j * self.u), axis=1))
+
+    def dot_u(self):
+        self.du = np.gradient(self.u, self.dt, axis=0)
+
+    def all(self):
+        self.solve()
+        self.dot_u()
+        self.opr_t()
 
     def save(self, fmt):
         if fmt == 'txt':
@@ -53,3 +64,49 @@ class Solver:
             else:
                 phases = h5py.File("phases.h5", 'w')
                 phases.create_dataset(str(self.problem.kappa), data=self.u)
+
+
+class Plot:
+    def __init__(self, problem, solution):
+        self.problem = problem
+        self.solution = solution
+
+        self.u = self.solution.u
+        self.du = self.solution.du
+        self.t = self.solution.t
+        self.T = self.solution.T
+        self.dt = self.solution.dt
+        self.phi = np.arctan(np.sum(np.sin(self.u), axis=1) / np.sum(np.cos(self.u), axis=1))
+
+    def phase(self):
+        plt.close()
+        plt.figure(figsize=(7.5, 5))
+        plt.plot(self.t, self.u)
+        plt.xlim(0, self.T)
+        plt.title("Oscillators Phase")
+        plt.xlabel("Time")
+        plt.ylabel(r"$\theta_1,\theta_2$")
+        plt.legend([r"$\theta_1$", r"$\theta_2$"])
+
+    def phase_mean(self):
+        plt.close()
+        plt.figure(figsize=(7.5, 5))
+        plt.plot(self.t, self.phi)
+        plt.xlim(0, self.T)
+        plt.title("Fase Average")
+        plt.xlabel("Time")
+        plt.ylabel(r"$\psi$")
+
+    def velocity(self):
+        plt.close()
+        plt.figure(figsize=(7.5, 5))
+        plt.plot(self.t, self.du)
+        plt.plot(self.t, np.gradient(self.phi, self.dt), 'k')
+        plt.xlim(0, self.T)
+        plt.title("Aparent Angular Velocity")
+        plt.xlabel("Time")
+        plt.ylabel(r"$\Omega$")
+        plt.legend([r"$\dot{\theta_1}$", r"$\dot{\theta_2}$", r"$\dot{\varphi}$"])
+
+    def show(self):
+        plt.show()
