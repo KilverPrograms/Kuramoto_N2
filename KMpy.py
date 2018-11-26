@@ -1,6 +1,7 @@
 from __future__ import division
 import os
 import h5py
+import copy
 import odespy
 import matplotlib.pyplot as plt
 import numpy as np
@@ -77,30 +78,35 @@ class Plot:
         self.T = self.solution.T
         self.dt = self.solution.dt
         self.N = self.solution.N
-        # self.phi = np.arctan(np.sum(np.sin(self.u),axis=1)/np.sum(np.cos(self.u),axis=1))
-        self.phi = self.func()
+        self.phi = np.arctan(np.sum(np.sin(self.u),axis=1)/np.sum(np.cos(self.u),axis=1))
+        #self.phi = self.func()
+
 
     def func(self):
+        """En clnstruccion: Metodo que conecta las partes de self.phi
+           ya que esta esta a truzos.
+
+           Esta funcion no es del todo eficiente
+        """
         phi = np.arctan(np.sum(np.sin(self.u), axis=1) / np.sum(np.cos(self.u), axis=1))
-        phi[phi < 0] += np.pi / 2
+        aux = copy.copy(phi)
 
-        if phi[-1] - phi[-2] > 0.0:
-            uod = "up"
-        else:
-            uod = "down"
+        dphi = np.sign(phi[1:] - phi[:-1])
+        s = []
+        for i in xrange(len(dphi) - 1):
+            if (dphi[i - 1] != dphi[i]) and (dphi[i] != dphi[i + 1]) and (np.abs(phi[i + 1] - phi[i]) > 1):
+                s.append(i)
+        s.append(len(phi))
 
-        s = 0
-        if uod == "up":
-            for i in xrange(self.N + 1):
-                if (np.abs(phi[i] - phi[i - 1])) > s + np.pi / 4:
-                    s += np.pi / 2
-                phi[i] += s
-        else:
-            for i in xrange(self.N + 1):
-                if (np.abs(phi[i] - phi[i - 1])) > s + np.pi / 4:
-                    s += np.pi / 2
-                phi[i] -= s
-        return phi
+        for i in xrange(len(s) - 1):
+            diff = round((aux[s[i]] - aux[s[i] + 1]) / np.pi, 0)
+            if phi[s[i]] - phi[s[i] - 1] < 0:
+                aux[s[i] + 1:s[i + 1] + 1] += diff * np.pi
+            else:
+                aux[s[i] + 1:s[i + 1] + 1] += (diff) * np.pi
+
+        return aux
+
 
     def phase(self):
         plt.close()
@@ -116,7 +122,7 @@ class Plot:
         plt.close()
         plt.figure(figsize=(7.5, 5))
         plt.plot(self.t, self.phi)
-        plt.xlim(0, self.T)
+        plt.xlim(0, self.T,'-*')
         plt.title("Fase Average")
         plt.xlabel("Time")
         plt.ylabel(r"$\psi$")
