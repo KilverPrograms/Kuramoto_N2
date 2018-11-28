@@ -8,6 +8,9 @@ import numpy as np
 from numba import jitclass
 
 
+__author__ = "Kilver J. Campos"
+__version__ = "0.0.1"
+
 class Kuramoto:
     def __init__(self, omega, kappa):
         self.omega = omega
@@ -78,8 +81,8 @@ class Plot:
         self.T = self.solution.T
         self.dt = self.solution.dt
         self.N = self.solution.N
-        self.phi = np.arctan(np.sum(np.sin(self.u),axis=1)/np.sum(np.cos(self.u),axis=1))
-        #self.phi = self.func()
+        #self.phi = np.arctan(np.sum(np.sin(self.u),axis=1)/np.sum(np.cos(self.u),axis=1))
+        self.phi = self.func()
 
 
     def func(self):
@@ -94,16 +97,16 @@ class Plot:
         dphi = np.sign(phi[1:] - phi[:-1])
         s = []
         for i in xrange(len(dphi) - 1):
-            if (dphi[i - 1] != dphi[i]) and (dphi[i] != dphi[i + 1]) and (np.abs(phi[i + 1] - phi[i]) > 1):
+            if (dphi[i - 1] != dphi[i]) and (dphi[i] != dphi[i + 1]) and (np.abs(phi[i + 1] - phi[i]) > 0.5):
                 s.append(i)
         s.append(len(phi))
 
         for i in xrange(len(s) - 1):
-            diff = round((aux[s[i]] - aux[s[i] + 1]) / np.pi, 0)
+            diff = round((aux[s[i]] - aux[s[i] + 1]) / (.5 * np.pi), 0)
             if phi[s[i]] - phi[s[i] - 1] < 0:
-                aux[s[i] + 1:s[i + 1] + 1] += diff * np.pi
+                aux[s[i] + 1:s[i + 1] + 1] += diff * (np.pi/2)
             else:
-                aux[s[i] + 1:s[i + 1] + 1] += (diff) * np.pi
+                aux[s[i] + 1:s[i + 1] + 1] += diff * (np.pi/2)
 
         return aux
 
